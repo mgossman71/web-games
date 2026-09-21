@@ -5,7 +5,6 @@ import { enableSwipe } from '../../gameEngine/gameHelpers';
 
 const ROWS = 5;
 const COLS = 9;
-const PAD_Y = ROWS * 34 + 18;
 
 interface PowerUp {
   x: number;
@@ -19,6 +18,8 @@ export default function BrickBlaster(props: { width: number; height: number; run
   const rt = props.runtime ?? useGameRuntime();
   const W = rt.width;
   const H = rt.height;
+
+  const padY = H - 48; // paddle anchored near the bottom of the playfield
 
   const s = useRef({
     paddle: { x: W / 2, w: 92 },
@@ -55,9 +56,9 @@ export default function BrickBlaster(props: { width: number; height: number; run
   const resetBall = useCallback(() => {
     const st = s.current;
     st.balls = [
-      { x: st.paddle.x, y: PAD_Y - 12, vx: 180, vy: -220, stuck: true },
+      { x: st.paddle.x, y: padY - 12, vx: 180, vy: -220, stuck: true },
     ];
-  }, []);
+  }, [padY]);
 
   useEffect(() => {
     placeBricks();
@@ -131,7 +132,7 @@ export default function BrickBlaster(props: { width: number; height: number; run
           continue;
         }
         // catch at bottom
-        if (Math.abs(p.y - PAD_Y) < 18 && Math.abs(p.x - st.paddle.x) < st.paddle.w / 2 + 8) {
+        if (Math.abs(p.y - padY) < 18 && Math.abs(p.x - st.paddle.x) < st.paddle.w / 2 + 8) {
           applyPower(p.kind);
           st.powerups.splice(i, 1);
         }
@@ -142,7 +143,7 @@ export default function BrickBlaster(props: { width: number; height: number; run
         const b = st.balls[bi];
         if (b.stuck) {
           b.x = st.paddle.x;
-          b.y = PAD_Y - 12;
+          b.y = padY - 12;
           continue;
         }
         b.x += b.vx * dt * slow;
@@ -161,8 +162,8 @@ export default function BrickBlaster(props: { width: number; height: number; run
           b.vy = Math.abs(b.vy);
         }
         // paddle
-        if (b.vy > 0 && b.y + 6 >= PAD_Y - 6 && b.y + 6 <= PAD_Y + 16 && Math.abs(b.x - st.paddle.x) <= st.paddle.w / 2 + 8) {
-          b.y = PAD_Y - 6;
+        if (b.vy > 0 && b.y + 6 >= padY - 6 && b.y + 6 <= padY + 16 && Math.abs(b.x - st.paddle.x) <= st.paddle.w / 2 + 8) {
+          b.y = padY - 6;
           b.vy = -Math.abs(b.vy);
           const rel = (b.x - st.paddle.x) / (st.paddle.w / 2);
           const a = (rel * 0.9 + (Math.random() - 0.5) * 0.06) * Math.PI;
@@ -245,7 +246,7 @@ export default function BrickBlaster(props: { width: number; height: number; run
         if (kind === 'wide') {
           st.wideT = 8;
         } else if (kind === 'multi') {
-          const base = st.balls.find((b) => !b.stuck) ?? st.balls[0] ?? { x: st.paddle.x, y: PAD_Y - 12, vx: 0, vy: -200 };
+          const base = st.balls.find((b) => !b.stuck) ?? st.balls[0] ?? { x: st.paddle.x, y: padY - 12, vx: 0, vy: -200 };
           for (let i = 0; i < 2; i++) {
             const a = -Math.PI / 2 + (i === 0 ? -0.55 : 0.55);
             st.balls.push({ x: base.x, y: base.y, vx: Math.cos(a) * 240, vy: Math.sin(a) * 240, stuck: false });
@@ -310,12 +311,12 @@ export default function BrickBlaster(props: { width: number; height: number; run
     ctx.shadowBlur = 14;
     ctx.fillStyle = '#f472b6';
     ctx.beginPath();
-    ctx.moveTo(st.paddle.x - pw / 2 + 9, PAD_Y - 6);
-    ctx.lineTo(st.paddle.x + pw / 2 - 9, PAD_Y - 6);
-    ctx.arcTo(st.paddle.x + pw / 2, PAD_Y - 6, st.paddle.x + pw / 2, PAD_Y + 8, 8);
-    ctx.arcTo(st.paddle.x + pw / 2, PAD_Y + 8, st.paddle.x - pw / 2, PAD_Y + 8, 8);
-    ctx.arcTo(st.paddle.x - pw / 2, PAD_Y + 8, st.paddle.x - pw / 2, PAD_Y - 6, 8);
-    ctx.arcTo(st.paddle.x - pw / 2, PAD_Y - 6, st.paddle.x + pw / 2, PAD_Y - 6, 8);
+    ctx.moveTo(st.paddle.x - pw / 2 + 9, padY - 6);
+    ctx.lineTo(st.paddle.x + pw / 2 - 9, padY - 6);
+    ctx.arcTo(st.paddle.x + pw / 2, padY - 6, st.paddle.x + pw / 2, padY + 8, 8);
+    ctx.arcTo(st.paddle.x + pw / 2, padY + 8, st.paddle.x - pw / 2, padY + 8, 8);
+    ctx.arcTo(st.paddle.x - pw / 2, padY + 8, st.paddle.x - pw / 2, padY - 6, 8);
+    ctx.arcTo(st.paddle.x - pw / 2, padY - 6, st.paddle.x + pw / 2, padY - 6, 8);
     ctx.closePath();
     ctx.fill();
     ctx.restore();
