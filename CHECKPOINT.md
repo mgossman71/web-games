@@ -1,8 +1,9 @@
-# CHECKPOINT — Game Vault (interactive arcade) — SHIPPED ✅
+# CHECKPOINT — Game Vault (interactive arcade) — SHIPPED ✅ · PUBLISHED 🌐
 
-This file is the authoritative handoff. Two major bugs have been **FOUND,
-FIXED, and VERIFIED** (original 15-route crash + the "Play Again / frozen
-canvas" bug).
+This file is the authoritative handoff. Three defects have been **FOUND,
+FIXED, and VERIFIED** (15-route crash, "Play Again / frozen canvas", and
+Neon Snake's death-before-input), and the project is now a **public GitHub
+repo: https://github.com/mgossman71/web-games** (branch `main`).
 
 Absolute project root: **/Users/markgossman/Documents/GITHUB/test**
 HARD CONSTRAINT: ALL work stays inside that directory. Do not operate outside it.
@@ -75,6 +76,24 @@ zero console/page errors. Full regression: 16/16 routes render clean +
 live-render pixel check on block-drop (memory-matrix is static by design
 until a card is clicked — expected).
 
+## 2c. BUG #3 — Neon Snake died before first input — RESOLVED
+**Symptom:** a fresh snake run auto-started moving right and died into the
+right wall ~2s after load (score 20) before the player had any chance to steer.
+
+**FIX (`src/games/snake/SnakeGame.tsx`):** added a `started: boolean` state
+(init `false`). `stepWorld()` returns early while `!started && !dead`, so the
+snake is frozen until the first steering input (keyboard / gamepad / swipe /
+virtual buttons — all funnel through the same action pipeline) sets
+`s.started = true`. While waiting, a pulsing on-board hint
+"PRESS AN ARROW KEY — OR SWIPE — TO START" is drawn. Death/respawn logic
+unchanged.
+
+**Related fix (`src/gameEngine/input.ts`):** `preventDefault()` was called on
+**keyup** events, whose listener is registered `passive: true` → Chromium
+warning "Unable to preventDefault inside passive event listener invocation"
+every time an arrow key was released. Now called on **keydown only** (also
+where it matters — scroll intent begins on keydown).
+
 ## 3. What was also done this session
 - Removed ALL leftover TEMP diagnostics (SnakeGame `__propDesc`/`__snake_calls`
   + `[SNAKE-DOM]` div; GameShell `__shellMark`/`__shell_calls`;
@@ -84,6 +103,13 @@ until a card is clicked — expected).
 - Killed two stale servers left by the prior session: Vite dev on 127.0.0.1:5199
   and `python http.server` on 127.0.0.1:5197.
 - Rebuilt + redeployed via Docker Compose.
+- Neon Snake: wait-for-first-input gate + on-board hint (see 2c).
+- `src/gameEngine/input.ts`: `preventDefault` now keydown-only (passive-listener
+  warning eliminated).
+- **Published to GitHub (public):** `mgossman71/web-games` — repo created,
+  `.gitignore` added (node_modules/dist excluded), `git init -b main`,
+  initial commit `851639c` (66 files) pushed to `main`, remote `origin` set,
+  working tree clean.
 ## 4. VERIFICATION (all PASSED)
 - `npx tsc --noEmit` → **0 errors**.
 - `npm run build` → passes (15 lazy game chunks + index).
@@ -94,15 +120,30 @@ until a card is clicked — expected).
 - **Interaction check: INTERACTION-PASS** — pause overlay while playing + resume,
   game-over overlay with final score, and localStorage writes
   (`gv.score.neon-snake`, `gv.stats.v1`, `gv.achievements.v1`, etc.).
+- **Neon Snake pixel test: SNAKE-FIX-PASS** — no game over before first input
+  (idle 4s), no game over 500ms after first input, game over only after the
+  snake actually hits the top wall (score 10), localStorage writes present,
+  zero console/page errors.
+- **Play-again pixel test: PLAY-AGAIN-PASS** (after the 2b fix) — board pixels
+  change while playing (live render), death board ≠ post-restart board, no
+  instant death after restart, can die again in the restarted game; verified
+  on the CLEAN (instrumentation-removed) build.
 - NOTE: the two temp test scripts (`e2e-check.mjs`, `e2e-play.mjs`) were used for
   the above and then **deleted** (throwaway, not part of the app). If you want them
   kept for regression, re-add them under a `tests/` dir.
 
 ## 5. File state (final)
 - `src/pages/GamePage.tsx` — **FIXED** (`setReady(() => m.default)`).
-- `src/games/snake/SnakeGame.tsx`, `src/gameEngine/GameShell.tsx`,
-  `src/gameEngine/useGameRuntime.tsx` — clean (temp removed).
-- `README.md` — created. `gvaunt_probe.json` — deleted.
+- `src/app/gameState.tsx` — **FIXED** (stable `useCallback`/`useMemo` context —
+  see 2b).
+- `src/games/snake/SnakeGame.tsx` — wait-for-first-input gate + hint (2c).
+- `src/gameEngine/input.ts` — keydown-only `preventDefault` (2c).
+- `src/gameEngine/GameShell.tsx`, `src/gameEngine/useGameRuntime.tsx` — clean
+  (all temp instrumentation removed).
+- `README.md` — created, gotchas documented. `.gitignore` — created.
+  `gvaunt_probe.json` — deleted.
+- **Published:** `main` of `mgossman71/web-games` (public) matches this tree —
+  commit `851639c`, 66 files, clean working tree.
 - Everything else under `src/` clean and working.
 
 ## 6. Build / run / test commands (run INSIDE the project root)
@@ -117,13 +158,15 @@ until a card is clicked — expected).
   orbital-defense, paddle-arena, pixel-defender, tower-grid
 
 ## 7. Next steps (optional polish only — app is functional)
-1. (Optional) `git init` + initial commit for version control.
-2. (Optional) Re-add a regression test (the two e2e scripts) under `tests/`.
-3. (Optional) Play each game briefly by hand to confirm feel/balance.
-4. (Optional) Verify the other pages (Stats / Achievements / Settings) render and
+1. ~~(Optional) `git init` + initial commit~~ — **DONE**: public repo
+   `mgossman71/web-games`, `main` pushed (commit `851639c`).
+2. (Optional) CI / static deploy: GitHub Actions build, or GitHub Pages.
+3. (Optional) Re-add the regression e2e scripts under a `tests/` dir.
+4. (Optional) Play each game briefly by hand to confirm feel/balance.
+5. (Optional) Verify the other pages (Stats / Achievements / Settings) render and
    that achievements/toasts fire — home + game routes are proven; these chrome
    pages were not explicitly load-tested this session.
-5. Do NOT leave the project root; do NOT bundle third-party / copyrighted assets.
+6. Do NOT leave the project root; do NOT bundle third-party / copyrighted assets.
 
 ## 8. Key context / assumptions / discoveries
 - Environment: macOS, user home /Users/markgossman. Docker 29.8.0 + Compose
@@ -134,8 +177,12 @@ until a card is clicked — expected).
 - `playwright-core` ^1.63 is a devDependency with a cached chromium (1243) in
   ~/Library/Caches/ms-playwright — headless verification works offline.
 - Filename on disk is `CHECKPOINT.md` (uppercase); macOS FS is case-insensitive.
-- The core lesson: **never pass a function/component straight to `setState`** —
-  React will invoke it as an updater with the previous state. This was the single
-  line that broke every game route.
+- The core lessons: (1) **never pass a function/component straight to
+  `setState`** — React will invoke it as an updater with the previous state
+  (broke every game route). (2) **keep context callback/value identities
+  stable** — an unstable callback used in a `useMemo` dep silently recreates
+  the memoized object (here: the shell runtime with `ctx: null`), which froze
+  every game's canvas on its first frame.
 
-— End of checkpoint (app is live at http://127.0.0.1:8080).
+— End of checkpoint (app is live at http://127.0.0.1:8080; published at
+https://github.com/mgossman71/web-games).
