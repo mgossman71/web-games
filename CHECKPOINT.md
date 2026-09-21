@@ -142,8 +142,8 @@ where it matters — scroll intent begins on keydown).
   (all temp instrumentation removed).
 - `README.md` — created, gotchas documented. `.gitignore` — created.
   `gvaunt_probe.json` — deleted.
-- **Published:** `main` of `mgossman71/web-games` (public) matches this tree —
-  commit `851639c`, 66 files, clean working tree.
+- **Published:** `mgossman71/web-games` (public, branch `main`) mirrors this
+  tree — initial commit `851639c`, then a docs-only checkpoint commit.
 - Everything else under `src/` clean and working.
 
 ## 6. Build / run / test commands (run INSIDE the project root)
